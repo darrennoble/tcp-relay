@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/darrennoble/tcp-utils/util"
 	"net"
-	"os"
 	"time"
 )
 
@@ -14,19 +14,6 @@ var (
 	packetCount = flag.Int("count", 20, "the number of packets to send")
 )
 
-func handleError(err error, msg string, args ...interface{}) {
-	if msg == "" {
-		msg = "Error"
-	}
-
-	if len(args) > 0 {
-		msg = fmt.Sprintf(msg, args...)
-	}
-
-	fmt.Printf("%s: %v", msg, err)
-	os.Exit(1)
-}
-
 func main() {
 	flag.Parse()
 
@@ -34,7 +21,7 @@ func main() {
 
 	con, err := net.Dial("tcp", hostStr)
 	if err != nil {
-		handleError(err, "Error connecting to %s", hostStr)
+		util.HandleError(err, "Error connecting to %s", hostStr)
 	}
 
 	b := make([]byte, 16, 16)
@@ -50,18 +37,18 @@ func main() {
 
 		_, err = con.Write([]byte(packetStr))
 		if err != nil {
-			handleError(err, "Error writing to socket")
+			util.HandleError(err, "Error writing to socket")
 		}
 		count, err = con.Read(b)
 
 		end := time.Now()
 
 		if err != nil {
-			handleError(err, "Error reading from socket")
+			util.HandleError(err, "Error reading from socket")
 		}
 		bStr := string(b[0:count])
 		if packetStr != bStr {
-			handleError(fmt.Errorf("expected %s, got %s", packetStr, bStr), "Error, invalid response")
+			util.HandleError(fmt.Errorf("expected %s, got %s", packetStr, bStr), "Error, invalid response")
 		}
 
 		dur := end.Sub(start)
