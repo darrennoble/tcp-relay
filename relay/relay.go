@@ -3,10 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/darrennoble/tcp-utils/util"
+	"github.com/darrennoble/tcp-utils/errors"
 	"io"
 	"net"
-	"os"
 )
 
 var (
@@ -15,39 +14,35 @@ var (
 	remotePort = flag.Int("remote-port", 9876, "the remote host to connect to")
 )
 
-const buffSize int = 1024
-
 func main() {
 	flag.Parse()
 
 	ln, err := net.Listen("tcp", fmt.Sprintf(":%v", *port))
 	if err != nil {
-		util.HandleError(err, "Error listening on port %v", *port)
+		errors.Fatal(err, "Error listening on port %v", *port)
 	}
+	defer ln.Close()
 
-	con, err := ln.Accept()
-	if err != nil {
-		util.HandleError(err, "Error accepting connection")
-	}
-
-	b := make([]byte, buffSize, buffSize)
-
-	var count int
+	relayHostStr := fmt.Sprintf("%s:%v", *remoteHost, *remotePort)
 
 	for {
-		count, err = con.Read(b)
-		if err == io.EOF {
-			os.Exit(0)
-		}
+		clientCon, err := ln.Accept()
 		if err != nil {
-			util.HandleError(err, "Error reading from socket")
+			errors.Print(err, "Error accepting connection")
 		}
-		b2 := b[0:count]
-		fmt.Print(string(b2))
 
-		_, err = con.Write(b2)
+		relayCon, err := net.Dial("tcp", relayHostStr)
 		if err != nil {
-			util.HandleError(err, "Error writing to socket")
+			errors.Print(err, "Error connecting to relay host %s", relayHostStr)
 		}
+
+		go copyData(clientCon, relayCon)
+		go copyData(relayCon, clientCon)
 	}
+}
+
+func copyData(src, dest net.Conn) {
+	io.Copy(src, dest)
+	src.Close()
+	dest.Close()
 }

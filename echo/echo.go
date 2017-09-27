@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/darrennoble/tcp-utils/util"
+	"github.com/darrennoble/tcp-utils/errors"
 	"io"
 	"net"
 )
@@ -19,32 +19,19 @@ func main() {
 
 	ln, err := net.Listen("tcp", fmt.Sprintf(":%v", *port))
 	if err != nil {
-		util.HandleError(err, "Error listening on port %v", *port)
+		errors.Fatal(err, "Error listening on port %v", *port)
 	}
-
-	con, err := ln.Accept()
-	if err != nil {
-		util.HandleError(err, "Error accepting connection")
-	}
-
-	b := make([]byte, buffSize, buffSize)
-
-	var count int
+	defer ln.Close()
 
 	for {
-		count, err = con.Read(b)
-		if err == io.EOF {
-			break
-		}
+		con, err := ln.Accept()
 		if err != nil {
-			util.HandleError(err, "Error reading from socket")
+			errors.Print(err, "Error accepting connection")
 		}
-		b2 := b[0:count]
-		fmt.Print(string(b2))
 
-		_, err = con.Write(b2)
-		if err != nil {
-			util.HandleError(err, "Error writing to socket")
-		}
+		go func(c net.Conn) {
+			io.Copy(c, c)
+			c.Close()
+		}(con)
 	}
 }

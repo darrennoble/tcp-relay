@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/darrennoble/tcp-utils/util"
+	"github.com/darrennoble/tcp-utils/errors"
 	"net"
 	"time"
 )
@@ -21,7 +21,7 @@ func main() {
 
 	con, err := net.Dial("tcp", hostStr)
 	if err != nil {
-		util.HandleError(err, "Error connecting to %s", hostStr)
+		errors.Fatal(err, "Error connecting to %s", hostStr)
 	}
 
 	b := make([]byte, 16, 16)
@@ -37,18 +37,18 @@ func main() {
 
 		_, err = con.Write([]byte(packetStr))
 		if err != nil {
-			util.HandleError(err, "Error writing to socket")
+			errors.Fatal(err, "Error writing to socket")
 		}
 		count, err = con.Read(b)
 
 		end := time.Now()
 
 		if err != nil {
-			util.HandleError(err, "Error reading from socket")
+			errors.Fatal(err, "Error reading from socket")
 		}
 		bStr := string(b[0:count])
 		if packetStr != bStr {
-			util.HandleError(fmt.Errorf("expected %s, got %s", packetStr, bStr), "Error, invalid response")
+			errors.Fatal(fmt.Errorf("expected %s, got %s", packetStr, bStr), "Error, invalid response")
 		}
 
 		dur := end.Sub(start)
