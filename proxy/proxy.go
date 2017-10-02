@@ -23,7 +23,7 @@ func main() {
 	}
 	defer ln.Close()
 
-	relayHostStr := fmt.Sprintf("%s:%v", *remoteHost, *remotePort)
+	proxyHostStr := fmt.Sprintf("%s:%v", *remoteHost, *remotePort)
 
 	for {
 		clientCon, err := ln.Accept()
@@ -31,13 +31,13 @@ func main() {
 			errors.Print(err, "Error accepting connection")
 		}
 
-		relayCon, err := net.Dial("tcp", relayHostStr)
+		proxyCon, err := net.Dial("tcp", proxyHostStr)
 		if err != nil {
-			errors.Print(err, "Error connecting to relay host %s", relayHostStr)
+			errors.Print(err, "Error connecting to proxy host %s", proxyHostStr)
 		}
 
-		go copyData(clientCon, relayCon)
-		go copyData(relayCon, clientCon)
+		go copyData(clientCon, proxyCon)
+		go copyData(proxyCon, clientCon)
 	}
 }
 
