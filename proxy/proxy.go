@@ -29,6 +29,7 @@ func main() {
 		clientCon, err := ln.Accept()
 		if err != nil {
 			errors.Print(err, "Error accepting connection")
+			continue
 		}
 
 		proxyCon, err := net.Dial("tcp", proxyHostStr)
