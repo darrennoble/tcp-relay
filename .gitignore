@@ -4,6 +4,12 @@
 *.so
 *.dylib
 
+echo/echo
+relay/relay
+ping/ping
+proxy/proxy
+relay-wrapper/relay-wrapper
+
 # Test binary, build with `go test -c`
 *.test
 
